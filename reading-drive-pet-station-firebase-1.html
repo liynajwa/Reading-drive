@@ -1,0 +1,226 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Reading Drive: Pet Station</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0;overflow:hidden;background:#bfe6ff;font-family:system-ui,"Segoe UI",Arial,sans-serif;color:#2a2350;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.b{border:0;border-radius:16px;font:700 18px system-ui,Arial,sans-serif;min-height:56px;padding:0 16px;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.2);background:#fff;color:#2a2350}
+.on{background:#ffeb3b!important}
+#top{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{background:#fff;border-radius:20px;padding:8px 14px;font-weight:800;color:#3b2f9b}
+/* TITLE SLOT: replace the contents of #ts (and #ts2 on the start screen) with your own title or logo */
+#ts{background:rgba(255,255,255,.85);border-radius:20px;padding:8px 14px;font-weight:800;color:#7a4a1c}
+#side{position:fixed;right:8px;top:calc(70px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:8px}
+#side .b{width:74px;min-height:62px;font-size:13px;line-height:1.15;padding:4px}
+#ctl{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:12px;right:12px;display:none;justify-content:space-between;pointer-events:none}
+#ctl .b{width:92px;height:92px;font-size:40px;background:#7b5cf0;color:#fff;border-radius:50%;pointer-events:auto}
+.panel{position:fixed;background:#fffdf5;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.28);padding:14px;left:8px;right:92px;opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .35s,transform .35s;max-width:680px}
+.panel.show{opacity:1;transform:none;pointer-events:auto}
+#read{top:calc(120px + env(safe-area-inset-top,0px));max-height:42vh;overflow:auto}
+#q{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+#tm{top:calc(120px + env(safe-area-inset-top,0px));background:#eaf6ff;font-size:19px;line-height:1.4}
+.hd{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px;font-weight:800}
+#pass{font-size:22px;line-height:2.1}
+.w{padding:3px 1px;border-radius:5px;cursor:pointer}
+.h{background:#ffe600;color:#000}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.row .b{min-height:48px;font-size:16px}
+.chips{font-size:13px;font-weight:800;color:#5b4bc4;margin-bottom:4px}
+#qt{font-size:24px;font-weight:800;margin:4px 0}
+.k{background:#e5dcff;border-radius:6px;padding:0 4px;text-decoration:underline;text-decoration-thickness:3px;text-decoration-color:#7b5cf0}
+.a{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font-size:22px;min-height:60px;margin:8px 0;background:#eef0ff}
+.a i{font-style:normal;background:#7b5cf0;color:#fff;border-radius:50%;width:38px;height:38px;display:grid;place-items:center;flex:none}
+.a.x{background:#ffdede}.a.ok{background:#c9f5c9}
+#msg{font-size:20px;font-weight:800;min-height:26px}
+.ov{position:fixed;inset:0;background:rgba(40,30,110,.45);display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto}
+.card{background:#fffdf5;border-radius:26px;padding:18px;max-width:560px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+#ts2{border:3px dashed #c9a46b;border-radius:18px;padding:10px;font-size:26px;font-weight:900;color:#7a4a1c;background:#fff6e0}
+#go{font-size:34px;min-height:76px;width:100%;background:#ffb300;margin:12px 0}
+.lb{background:#f1f0ff;border-radius:16px;padding:8px 12px;text-align:left;margin-top:10px}
+.lb ol{margin:4px 0 0;padding-left:22px;font-size:17px}
+input{font-size:20px;padding:10px;border-radius:12px;border:2px solid #7b5cf0;width:60%}
+#end{display:none}
+#grid{display:grid;grid-template-columns:repeat(5,auto);gap:6px;justify-content:center;margin:10px 0}
+.tile{width:min(15vw,66px);height:min(15vw,66px);font-size:min(7.5vw,30px);border:0;border-radius:14px;background:#eef0ff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;font-weight:700;line-height:1.1;box-shadow:0 3px 0 rgba(0,0,0,.18);cursor:pointer;transition:transform .2s}
+.tile small{font-size:12px;color:#2a2350}
+.tile.sel{background:#ffeb3b;outline:3px solid #ffb300;transform:scale(1.08)}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="top"><span class="pill" id="prog">Question 1 of 5</span><span class="pill" id="stars">⭐ 0/5</span><span id="ts">Reading Drive · Pet Station</span></div>
+<div id="side"><button class="b" id="bR">📖<br>Read Me</button><button class="b" id="bH">🖍️<br>Highlight</button><button class="b" id="bM">🔊<br>Sound on</button><button class="b" id="bT">🎓<br>Teacher</button></div>
+<div id="ctl"><button class="b" id="bL">◀</button><button class="b" id="bRt">▶</button></div>
+<div class="panel" id="read"><div class="hd"><span>📖 READ ME</span><button class="b" id="xR" style="min-height:48px">✕ Close</button></div>
+<div class="chips">UNDERLINE → FIND → MATCH → ANSWER</div><div id="pass"></div>
+<div class="row"><button class="b" id="pH" style="background:#ffeb3b">🖍️ Highlight: off</button><button class="b" id="pM">Mode: Words</button><button class="b" id="pC">Clear</button><button class="b" id="pP" style="background:#c9f5e3">📌 Keep Open</button></div></div>
+<div class="panel" id="tm"><div class="hd"><span>🎓 Teacher Demo</span><button class="b" id="xT" style="min-height:48px">✕</button></div><div id="tmt"></div><div class="row"><button class="b" id="tB">◀ Back</button><button class="b" id="tN">Next ▶</button></div></div>
+<div class="panel" id="q" style="right:8px;margin:0 auto"><div class="hd"><span id="qn"></span></div><div id="qt"></div><div id="ans"></div><div id="msg"></div></div>
+<div class="ov" id="start"><div class="card"><div id="ts2">Reading Drive: Pet Station</div><p style="font-size:19px;margin:10px 0 0">Drive slowly. Stop at each checkpoint. Read, find the clues, answer.</p><input id="pn" maxlength="14" placeholder="Type your name here" style="width:100%;box-sizing:border-box;margin-top:12px;text-align:center"><button class="b" id="go">▶ START</button><div class="lb"><b>🏆 Leaderboard</b><ol class="lbb"></ol><div class="fbc" style="font-size:14px;font-weight:700;margin-top:6px;color:#5b4bc4">Checking online leaderboard...</div></div></div></div>
+<div class="ov" id="mt" style="display:none"><div class="card"><h2 style="margin:0;font-size:26px">🍖 Word Match!</h2><div id="mc" style="font-weight:800;font-size:20px;color:#5b4bc4"></div><div id="grid"></div><div id="mcap" style="font-size:19px;font-weight:700;min-height:50px"></div><button class="b" id="skipM">Skip ▶ keep driving</button></div></div>
+<div class="ov" id="end"><div class="card"><div style="font-size:44px;letter-spacing:4px">⭐⭐⭐⭐⭐</div><h2 style="font-size:32px;margin:6px 0">Reading Champion! You did it!</h2><div id="fs" style="font-size:22px;font-weight:800"></div><p id="who" style="margin:10px 0 4px;font-size:19px;font-weight:700"></p><p id="fbs" style="font-size:15px;margin:4px 0;font-weight:700"></p><input id="nm" style="display:none"><button id="sv" style="display:none">Save</button><div class="lb"><b>🏆 Leaderboard</b><ol class="lbb"></ol><div class="fbc" style="font-size:14px;font-weight:700;margin-top:6px;color:#5b4bc4">Checking online leaderboard...</div></div><button class="b" id="again" style="background:#ffb300;width:100%;margin-top:12px;font-size:22px">Play Again</button></div></div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),R=40,C=2*Math.PI*R,PI2=2*Math.PI;
+const PASS="Hi! My name is Ben. I have a pet dog called Max. Max is brown and has long ears. It likes to eat chicken and drink water. Max sleeps in a small house near the gate. Every evening, I take Max for a walk in the park. Max is my best friend.";
+const Q=[{t:'What pet does Ben have?',k:['pet','Ben'],o:['A cat','A dog','A rabbit'],c:1},{t:'What colour is Max?',k:['colour','Max'],o:['Black','White','Brown'],c:2},{t:'What does Max like to eat?',k:['eat','Max'],o:['Chicken','Fish','Carrots'],c:0},{t:'Where does Max sleep?',k:['sleep','Max'],o:['In the kitchen','In a small house near the gate','In the bedroom'],c:1},{t:'When does Ben take Max for a walk?',k:['walk','Ben'],o:['Every morning','Every afternoon','Every evening'],c:2}];
+const cv=$('c'),g=cv.getContext('2d');let W,H,F,hy;
+function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;F=Math.min(H*.9,Math.max(W*.8,H*.5))}
+addEventListener('resize',rs);rs();
+/* ---------- state ---------- */
+const CP=i=>.03+(i+1)*.17;
+let pname='Player',st='idle',t=.03,v=0,qi=0,off=0,steer=0,time=0,wr=0,star=null,done=[0,0,0,0,0],pin=0,hlOn=0,sentM=0,first=0,att=0,qatt=0,lock=0,mute=0,ti=0;
+/* ---------- audio ---------- */
+let AC,eg,eo;
+function audio(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();eo=AC.createOscillator();eg=AC.createGain();eo.type='triangle';eo.frequency.value=70;eg.gain.value=0;eo.connect(eg);eg.connect(AC.destination);eo.start()}catch(e){AC=null}}
+function beep(f,d,dl){if(!AC||mute)return;const o=AC.createOscillator(),n=AC.createGain(),s=AC.currentTime+(dl||0);o.frequency.value=f;o.connect(n);n.connect(AC.destination);n.gain.setValueAtTime(.07,s);n.gain.exponentialRampToValueAtTime(.001,s+d);o.start(s);o.stop(s+d)}
+/* ---------- tiny 3D engine ---------- */
+const S=[],G=[];let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+const pw=(a,r,y)=>[r*Math.cos(a),y,r*Math.sin(a)];
+const mk=(x,z,dx,dz,by)=>p=>[x+dx*p[2]+dz*p[0],p[1]+(by||0),z+dz*p[2]-dx*p[0]];
+function box(L,x,y,z,w,h,d,col,xf){const a=w/2,b=d/2,P=[[-a,0,-b],[a,0,-b],[a,0,b],[-a,0,b],[-a,h,-b],[a,h,-b],[a,h,b],[-a,h,b]].map(p=>{p=[p[0]+x,p[1]+y,p[2]+z];return xf?xf(p):p});
+[[4,5,6,7,1],[0,1,5,4,.75],[1,2,6,5,.88],[2,3,7,6,.7],[3,0,4,7,.82]].forEach(f=>L.push({p:f.slice(0,4).map(i=>P[i]),c:col,k:f[4]}))}
+function pyr(L,x,y,z,r,h,col,n,xf){const B=[];for(let i=0;i<n;i++){const a=i/n*PI2+.4;B.push([x+r*Math.cos(a),y,z+r*Math.sin(a)])}const T=[x,y+h,z];
+for(let i=0;i<n;i++){let p=[B[i],B[(i+1)%n],T];if(xf)p=p.map(xf);L.push({p,c:col,k:.7+.3*((i%3)/2)})}}
+const quad=(L,a,col,k,o)=>L.push(Object.assign({p:a,c:col,k:k||1},o||{}));
+/* track */
+for(let k=0;k<72;k++){const a0=k/72*PI2,a1=(k+1.04)/72*PI2,c=k%2?[212,174,118]:[218,180,124];
+quad(G,[pw(a0,R-6,.02),pw(a1,R-6,.02),pw(a1,R+6,.02),pw(a0,R+6,.02)],c);
+if(k%2)quad(G,[pw(a0,R-.25,.04),pw(a1*.5+a0*.5,R-.25,.04),pw(a1*.5+a0*.5,R+.25,.04),pw(a0,R+.25,.04)],[255,250,235]);
+const cc=k%2?[235,235,235]:[230,90,90];quad(G,[pw(a0,R+6,.03),pw(a1,R+6,.03),pw(a1,R+6.7,.03),pw(a0,R+6.7,.03)],cc);quad(G,[pw(a0,R-6.7,.03),pw(a1,R-6.7,.03),pw(a1,R-6,.03),pw(a0,R-6,.03)],cc)}
+quad(G,[pw(.97,R+6,.03),pw(1.03,R+6,.03),pw(1.03,57,.03),pw(.97,57,.03)],[198,160,108]);
+for(let i=0;i<12;i++)for(let j=0;j<2;j++){const a0=-.025+j*.025,a1=a0+.025,r0=R-6+i,c=(i+j)%2?[250,250,250]:[40,40,50];quad(G,[pw(a0,r0,.05),pw(a1,r0,.05),pw(a1,r0+1,.05),pw(a0,r0+1,.05)],c)}
+/* trees */
+for(let i=0;i<30;i++){const a=rnd()*PI2,out=i%2,r=out?62+rnd()*14:8+rnd()*16;if(out&&Math.abs(a-1)<.4)continue;const [x,,z]=pw(a,r,0),s=.9+rnd()*.5;
+box(S,x,0,z,.6*s,1.6*s,.6*s,[130,85,50]);pyr(S,x,1.3*s,z,2*s,3.2*s,[70,160,80],6);pyr(S,x,2.9*s,z,1.4*s,2.6*s,[90,185,95],6)}
+/* flowers */
+const FC=[[255,130,170],[255,220,70],[250,250,250],[180,140,255]];
+for(let i=0;i<70;i++){const a=rnd()*PI2,r=rnd()<.5?R+7.6+rnd()*2:R-7.6-rnd()*2,[x,,z]=pw(a,r,0);box(S,x,0,z,.1,.6,.1,[60,150,60]);box(S,x,.6,z,.5,.25,.5,FC[i%4])}
+/* fences */
+function fence(r,step,gap){const n=Math.round(PI2/step);for(let i=0;i<n;i++){const a0=i*step,a1=(i+1)*step;if(gap&&Math.abs(a0-1)<.1)continue;const [x,,z]=pw(a0,r,0);box(S,x,0,z,.35,1.1,.35,[190,140,80]);
+quad(S,[pw(a0,r,.35),pw(a1,r,.35),pw(a1,r,.7),pw(a0,r,.7)],[215,170,105],.95);quad(S,[pw(a0,r,.8),pw(a1,r,.8),pw(a1,r,1.0),pw(a0,r,1.0)],[215,170,105],.95)}}
+fence(R+10,.08,1);fence(R-10,.13,0);
+/* gate, doghouse */
+{const [x1,,z1]=pw(.95,50,0),[x2,,z2]=pw(1.05,50,0);box(S,x1,0,z1,.6,3.4,.6,[150,100,60]);box(S,x2,0,z2,.6,3.4,.6,[150,100,60]);
+quad(S,[pw(.95,50,3),pw(1.05,50,3),pw(1.05,50,3.9),pw(.95,50,3.9)],[255,240,200],1,{tx:'PARK',ts:.7});
+const [hx,,hz]=pw(1.16,57,0),l=Math.hypot(hx,hz),xf=mk(hx,hz,-hx/l,-hz/l);
+box(S,0,0,0,3.2,2.1,3.2,[205,85,70],xf);pyr(S,0,2.1,0,2.8,1.8,[150,50,50],4,xf);quad(S,[[-.6,0,1.62],[.6,0,1.62],[.6,1.3,1.62],[-.6,1.3,1.62]].map(xf),[60,30,25])}
+/* ---------- projection ---------- */
+let cx,cz,cdx,cdz;const cy=5;
+function proj(P){const Q=P.map(p=>{const rx=p[0]-cx,rz=p[2]-cz;return[rx*cdz-rz*cdx,p[1]-cy,rx*cdx+rz*cdz]}),o=[];
+for(let i=0;i<Q.length;i++){const a=Q[i],b=Q[(i+1)%Q.length],ai=a[2]>=.5,bi=b[2]>=.5;if(ai)o.push(a);if(ai!=bi){const u=(.5-a[2])/(b[2]-a[2]);o.push([a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,.5])}}
+return o.length>2?o.map(q=>[W/2+q[0]/q[2]*F,hy-q[1]/q[2]*F,q[2]]):null}
+function dl(L){const out=[];for(const o of L){const p0=o.p[0],f=(p0[0]-cx)*cdx+(p0[2]-cz)*cdz;if(f<-8||f>125)continue;const s=proj(o.p);if(!s)continue;let d=0;for(const q of s)d+=q[2];out.push([d/s.length,s,o])}
+out.sort((u,w)=>w[0]-u[0]);
+for(const[d,s,o]of out){const m=Math.min(.7,d/140),k=o.k||1,c=o.c;g.fillStyle=`rgb(${c[0]*k*(1-m)+185*m|0},${c[1]*k*(1-m)+225*m|0},${c[2]*k*(1-m)+240*m|0})`;g.beginPath();s.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();
+if(o.tx){let sx=0,sy=0;for(const q of s){sx+=q[0];sy+=q[1]}g.fillStyle=o.tc||'#2a2350';g.font=`900 ${Math.min(60,o.ts*F/d)|0}px system-ui,Arial`;g.textAlign='center';g.textBaseline='middle';g.fillText(o.tx,sx/s.length,sy/s.length)}}}
+/* ---------- render ---------- */
+function render(){hy=H*.36;const a=PI2*t,kx=(R+off)*Math.cos(a),kz=(R+off)*Math.sin(a),dx=-Math.sin(a),dz=Math.cos(a),ac=a-13/R;
+cx=(R+off*.6)*Math.cos(ac);cz=(R+off*.6)*Math.sin(ac);cdx=-Math.sin(ac);cdz=Math.cos(ac);
+let gr=g.createLinearGradient(0,0,0,hy);gr.addColorStop(0,'#8fd0ff');gr.addColorStop(1,'#e4f5ff');g.fillStyle=gr;g.fillRect(0,0,W,hy+2);
+g.fillStyle='#fff';for(let i=0;i<5;i++){const x=(((i*260-a*400)%(W+260))+W+260)%(W+260)-130,y=30+i%3*28+hy*.1;g.beginPath();g.ellipse(x,y,60,20,0,0,7);g.ellipse(x+34,y+6,44,16,0,0,7);g.fill()}
+g.fillStyle='#a9dba0';g.beginPath();g.moveTo(0,hy);for(let x=0;x<=W;x+=20)g.lineTo(x,hy-14-12*Math.sin(x*.01+a*3)-8*Math.sin(x*.027));g.lineTo(W,hy);g.fill();
+g.fillStyle='#8fd16a';g.fillRect(0,hy,W,H-hy);
+dl(G);
+const D=[],bob=v>.1?Math.sin(time*9)*.04:0,K=p=>[kx+dx*p[2]+dz*p[0],p[1]+bob,kz+dz*p[2]-dx*p[0]];
+box(D,0,.2,0,1.6,.6,3,[70,110,235],K);box(D,0,.25,1.9,1.2,.45,1.1,[150,85,225],K);box(D,0,.8,-.4,1.1,.9,.3,[150,85,225],K);
+box(D,0,.8,-1.5,1.9,.15,.45,[150,85,225],K);box(D,-.6,.2,-1.4,.12,.65,.12,[90,60,170],K);box(D,.6,.2,-1.4,.12,.65,.12,[90,60,170],K);
+box(D,0,.8,-.1,.7,.7,.5,[255,200,70],K);box(D,0,1.5,-.1,.7,.6,.6,[255,213,175],K);box(D,0,2.05,-.1,.85,.25,.85,[50,70,210],K);box(D,0,2.0,.4,.7,.1,.4,[40,55,180],K);
+box(D,-.4,.45,2.5,.25,.2,.1,[255,240,120],K);box(D,.4,.45,2.5,.25,.2,.1,[255,240,120],K);
+for(const sx of[-1,1])for(const sz of[-1.1,1.3]){box(D,sx*1.0,0,sz,.35,.9,.9,[40,40,55],K);box(D,sx*1.0+sx*.2,.45+.28*Math.sin(wr)-.1,sz+.28*Math.cos(wr)-.1,.1,.2,.2,[220,220,230],K)}
+/* dog */
+{const[x,,z]=pw(.93,53,0),l=Math.hypot(x,z),T=time%4,hop=T<.7?Math.abs(Math.sin(T*4.5))*.7:0,s=1.8,xf=p=>{const q=mk(x,z,-x/l,-z/l,hop)([p[0]*s,p[1]*s,p[2]*s]);return q},br=[150,95,50],dk=[105,62,30],e=Math.sin(time*7)*.05;
+box(D,0,.5,0,.8,.8,1.6,br,xf);box(D,0,.9,1.0,.7,.65,.7,br,xf);box(D,0,.9,1.4,.4,.3,.3,dk,xf);box(D,-.42,.8+e,1.0,.15,.55,.3,dk,xf);box(D,.42,.8-e,1.0,.15,.55,.3,dk,xf);box(D,0,.9,-.95,.15,.15,.6,dk,xf);
+for(const sx of[-.28,.28])for(const sz of[-.6,.6])box(D,sx,0,sz,.2,.5,.2,dk,xf)}
+/* signs */
+for(let i=0;i<5;i++){const A=PI2*CP(i),r=R+8.5,c=done[i]?[70,190,90]:(i==qi?[255,170,40]:[250,200,90]),[x,,z]=pw(A,r,0);box(D,x,0,z,.25,2.2,.25,[120,80,50]);
+quad(D,[pw(A,r-1.6,2.1),pw(A,r+1.6,2.1),pw(A,r+1.6,3.9),pw(A,r-1.6,3.9)],c,1,{tx:done[i]?'✓':String(i+1),ts:1.3,tc:done[i]?'#fff':'#2a2350'})}
+quad(D,[pw(.012,R+7.5,2.1),pw(.012,R+9.5,2.1),pw(.012,R+9.5,3.5),pw(.012,R+7.5,3.5)],[70,190,90],1,{tx:'START',ts:.5,tc:'#fff'});
+for(const r of[R-7.2,R+7.2]){const[x,,z]=pw(0,r,0);box(D,x,0,z,.6,5.4,.6,[120,80,50])}
+quad(D,[pw(0,R-7.2,4.6),pw(0,R+7.2,4.6),pw(0,R+7.2,5.8),pw(0,R-7.2,5.8)],[255,250,230],1,{tx:'FINISH',ts:1.5});
+{const w=Math.sin(time*4)*.3,b=pw(0,R+7.2,5.2);quad(D,[b,[b[0],b[1]+.1+w*.2,b[2]+2],[b[0],b[1]+1.2+w,b[2]+2],[b[0],b[1]+1.1,b[2]]],[235,70,70])}
+dl(S);dl(D);
+/* star */
+if(star){const age=time-star.t;if(age<1.9){const x=kx,y=2.9+age*.9,f=(x-cx)*cdx+(kz-cz)*cdz,sx=W/2+((x-cx)*cdz-(kz-cz)*cdx)/f*F,sy=hy-(y-cy)/f*F,r=(26+3*Math.sin(age*6))*F/700;g.globalAlpha=Math.min(1,(1.9-age)*2);g.fillStyle='#ffd400';g.strokeStyle='#f59a00';g.lineWidth=3;g.beginPath();for(let i=0;i<10;i++){const q=i%2?r*.45:r,an=i*Math.PI/5-Math.PI/2;g.lineTo(sx+q*Math.cos(an),sy+q*Math.sin(an))}g.closePath();g.fill();g.stroke();g.globalAlpha=1}else star=null}}
+/* ---------- game logic ---------- */
+function hud(){$('prog').textContent='Question '+Math.min(qi+1,5)+' of 5';$('stars').textContent='⭐ '+done.reduce((x,y)=>x+y,0)+'/5'}
+function show(id,on){$(id).classList.toggle('show',!!on)}
+function showQ(){const q=Q[qi];qatt=0;lock=0;$('qn').textContent='Question '+(qi+1)+' of 5';let h=q.t;q.k.forEach(k=>{h=h.replace(new RegExp('\\b'+k+'\\b'),'<span class="k">'+k+'</span>')});$('qt').innerHTML=h;$('msg').textContent='';
+$('ans').innerHTML=q.o.map((o,i)=>`<button class="b a" data-i="${i}"><i>${'ABC'[i]}</i>${o}</button>`).join('');show('q',1);if(pin)show('read',1);$('bR').style.outline='4px solid #ffb300';tmu()}
+$('ans').addEventListener('click',e=>{const b=e.target.closest('.a');if(!b||st!='q'||lock)return;const i=+b.dataset.i,q=Q[qi];att++;qatt++;
+if(i==q.c){if(qatt==1)first++;done[qi]=1;lock=1;b.classList.add('ok');$('msg').style.color='#1a8a3a';$('msg').textContent='Great job! ⭐';beep(660,.2);beep(880,.3,.18);star={t:time};hud();
+setTimeout(()=>{show('q',0);startMatch(()=>{if(!pin)show('read',0);qi++;st='drive';hud();ctl();$('bR').style.outline=''})},1900)}
+else{b.classList.add('x');$('msg').style.color='#b04a00';$('msg').textContent='Try again! Read the text and look for clues.';beep(260,.25)}});
+function ctl(){$('ctl').style.display=st=='drive'?'flex':'none'}
+function arrive(){if(qi<5){st='q';ctl();showQ()}else{st='fin';ctl();finish()}}
+function finish(){const lb=lbGet().concat([{n:pname,s:first,a:att}]).sort((x,y)=>y.s-x.s||x.a-y.a).slice(0,5);lbSet(lb);$('who').textContent='Well done, '+pname+'! Your score is saved.';$('fs').textContent='Score: '+first+'/5 on the first try · Attempts: '+att+' · Word matches: '+bonus;$('end').style.display='flex';lbRender();const fs=$('fbs');fs.textContent='Saving online...';if(!window.fbSave)fs.textContent='⚠️ Firebase did not load. Check internet, and do not use the claude.ai link.';else Promise.race([window.fbSave({n:pname,s:first,a:att,m:bonus}),new Promise((_,j)=>setTimeout(()=>j({message:'no reply. Check the database ID and rules'}),8000))]).then(()=>{fs.textContent='✅ Saved online';lbRender()}).catch(e=>{fs.textContent='❌ Not saved: '+(e.code||e.message)})}
+function step(dt){time+=dt;if(st=='drive'){const tg=qi<5?CP(qi):1,d=(tg-t)*C,vt=Math.min(15,Math.max(2,d*1.4));v+=(vt-v)*Math.min(1,dt*2.5);t+=v*dt/C;if(d<.15){t=tg;v=0;arrive()}}else v*=Math.max(0,1-dt*3);
+off=Math.max(-3.5,Math.min(3.5,off+steer*dt*2));wr+=v*dt*1.6;if(eg){eg.gain.value=mute?0:Math.min(.03,v*.007);eo.frequency.value=60+v*7}}
+let last=0;function loop(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;step(dt);render();requestAnimationFrame(loop)}
+/* ---------- word match (match-3) ---------- */
+const TL=[['🐶','dog','I have a pet dog called Max.'],['🍗','chicken','Max likes to eat chicken.'],['💧','water','Max likes to drink water.'],['🏠','house','Max sleeps in a small house.']];
+let mb=[],ms=null,mm=0,mcb=null,mbz=0,bonus=0;
+const ri=()=>Math.floor(Math.random()*4);
+function fm(b){const s=new Set;for(let r=0;r<5;r++)for(let c=0;c<5;c++){const i=r*5+c,t=b[i];if(t<0)continue;if(c<3&&b[i+1]==t&&b[i+2]==t)[i,i+1,i+2].forEach(x=>s.add(x));if(r<3&&b[i+5]==t&&b[i+10]==t)[i,i+5,i+10].forEach(x=>s.add(x))}return s}
+function hm(b){for(let i=0;i<25;i++){const c=i%5,r=(i-c)/5;for(const j of[c<4?i+1:-1,r<4?i+5:-1]){if(j<0)continue;[b[i],b[j]]=[b[j],b[i]];const ok=fm(b).size>0;[b[i],b[j]]=[b[j],b[i]];if(ok)return 1}}return 0}
+function nb(){let b;do{b=Array.from({length:25},ri)}while(fm(b).size||!hm(b));return b}
+function mdraw(){$('grid').innerHTML=mb.map((t,i)=>t<0?'<button class="tile" disabled style="opacity:.2"></button>':`<button class="tile${i===ms?' sel':''}" data-i="${i}">${TL[t][0]}<small>${TL[t][1]}</small></button>`).join('');$('mc').textContent='Matches: '+mm+' / 2'}
+function mend(){if(!mcb)return;const f=mcb;mcb=null;$('mt').style.display='none';f()}
+function startMatch(cb){mcb=cb;mm=0;ms=null;mbz=0;mb=nb();$('mcap').textContent='Swap two tiles next to each other to make 3 in a row!';mdraw();$('mt').style.display='flex'}
+function resolve(fresh){const s=fm(mb);if(!s.size){if(!hm(mb))mb=nb();if(mm>=2){mbz=1;mdraw();$('mcap').textContent='Great matching! ⭐';setTimeout(mend,1100)}else{mbz=0;mdraw()}return}
+if(fresh){const ty=mb[[...s][0]];$('mcap').textContent=TL[ty][2];mm++;bonus++;beep(700,.15);beep(900,.2,.12)}
+s.forEach(i=>mb[i]=-1);mdraw();
+setTimeout(()=>{for(let c=0;c<5;c++){const col=[];for(let r=4;r>=0;r--)if(mb[r*5+c]>=0)col.push(mb[r*5+c]);while(col.length<5)col.push(ri());for(let r=4;r>=0;r--)mb[r*5+c]=col[4-r]}mdraw();setTimeout(()=>resolve(false),350)},400)}
+$('grid').addEventListener('click',e=>{const b=e.target.closest('.tile');if(!b||mbz||!b.dataset.i)return;const i=+b.dataset.i;if(ms===null){ms=i;mdraw();return}if(ms===i){ms=null;mdraw();return}const a=ms;ms=null;
+if(!((Math.abs(a-i)==1&&Math.floor(a/5)==Math.floor(i/5))||Math.abs(a-i)==5)){ms=i;mdraw();return}
+[mb[a],mb[i]]=[mb[i],mb[a]];if(!fm(mb).size){[mb[a],mb[i]]=[mb[i],mb[a]];$('mcap').textContent='No match there. Try a different pair!';beep(260,.2);mdraw();return}mbz=1;resolve(true)});
+$('skipM').onclick=mend;
+/* ---------- passage + highlight ---------- */
+{let s=0,html='';PASS.split(/(?<=[.!?])\s+/).forEach((sn,si)=>{sn.split(' ').forEach(w=>{html+=`<span class="w" data-s="${si}">${w}</span> `})});$('pass').innerHTML=html}
+$('pass').addEventListener('click',e=>{const w=e.target.closest('.w');if(!w||!hlOn)return;if(sentM){const all=[...document.querySelectorAll('.w[data-s="'+w.dataset.s+'"]')],on=!w.classList.contains('h');all.forEach(x=>x.classList.toggle('h',on))}else w.classList.toggle('h')});
+function setHl(on){hlOn=on;$('bH').classList.toggle('on',on);$('pH').textContent='🖍️ Highlight: '+(on?'ON':'off');$('pH').classList.toggle('on',on)}
+$('bH').onclick=()=>{setHl(!hlOn);if(hlOn)show('read',1)};$('pH').onclick=()=>setHl(!hlOn);
+$('pM').onclick=()=>{sentM=!sentM;$('pM').textContent='Mode: '+(sentM?'Sentence':'Words')};
+$('pC').onclick=()=>document.querySelectorAll('.w.h').forEach(x=>x.classList.remove('h'));
+$('pP').onclick=()=>{pin=!pin;$('pP').classList.toggle('on',pin);$('pP').textContent=pin?'📌 Pinned':'📌 Keep Open'};
+$('bR').onclick=()=>{show('read',!$('read').classList.contains('show'));$('bR').style.outline=''};$('xR').onclick=()=>{show('read',0);pin=0;$('pP').classList.remove('on');$('pP').textContent='📌 Keep Open'};
+/* teacher */
+function tmu(){const q=Q[Math.min(qi,4)],k=q.k.join(' and '),T=['1. UNDERLINE: find the clue words in the question. Here they are: '+k+'.','2. FIND: open READ ME. Look for '+k+' in the passage. Tap 🖍️ to highlight what you find.','3. MATCH: read the sentence with those words. Does it match the question?','4. ANSWER: choose A, B or C. Check it matches your highlighted clue.'];$('tmt').textContent=T[ti]+'  ('+(ti+1)+'/4)'}
+$('bT').onclick=()=>{const o=!$('tm').classList.contains('show');$('bT').classList.toggle('on',o);show('tm',o);tmu()};$('xT').onclick=()=>{show('tm',0);$('bT').classList.remove('on')};
+$('tN').onclick=()=>{ti=Math.min(3,ti+1);tmu()};$('tB').onclick=()=>{ti=Math.max(0,ti-1);tmu()};
+/* controls */
+function hold(id,d){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();steer=d});['pointerup','pointerleave','pointercancel'].forEach(n=>b.addEventListener(n,()=>{if(steer==d)steer=0}))}
+hold('bL',-1);hold('bRt',1);
+addEventListener('keydown',e=>{if(e.key=='ArrowLeft')steer=-1;if(e.key=='ArrowRight')steer=1});addEventListener('keyup',()=>steer=0);
+$('bM').onclick=()=>{mute=!mute;$('bM').innerHTML=mute?'🔇<br>Muted':'🔊<br>Sound on'};
+$('go').onclick=()=>{const n=$('pn').value.trim();if(!n){$('pn').focus();$('pn').style.borderColor='#e33';$('pn').placeholder='Please type your name first';return}pname=n.slice(0,14);audio();if(AC&&AC.resume)AC.resume();$('start').style.display='none';st='drive';ctl()};
+/* leaderboard */
+const LK='rdps_lb';let mem=[];
+function lbGet(){try{return JSON.parse(localStorage.getItem(LK))||mem}catch(e){return mem}}
+function lbSet(a){mem=a;try{localStorage.setItem(LK,JSON.stringify(a))}catch(e){}}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function paint(a){document.querySelectorAll('.lbb').forEach(e=>e.innerHTML=a.length?a.map(r=>`<li>${esc(r.n)} — ${r.s}/5 ⭐ (${r.a} tries)</li>`).join(''):'<li style="list-style:none">No scores yet</li>')}
+function lbRender(){paint(lbGet());if(window.fbLoad)window.fbLoad().then(r=>{fbc('🟢 Online leaderboard connected');if(r&&r.length)paint(r)}).catch(e=>fbc('🔴 Cannot read online scores: '+(e.code||e.message)))}
+function fbc(m){document.querySelectorAll('.fbc').forEach(e=>e.textContent=m)}
+window.addEventListener('fbready',lbRender);window.addEventListener('fbfail',()=>fbc('🔴 Firebase failed to load: '+((window.fbErr&&(window.fbErr.message||String(window.fbErr)))||'blocked')));
+$('sv').onclick=()=>{const n=($('nm').value||'Player').trim().slice(0,14)||'Player',a=lbGet().concat([{n,s:first,a:att}]).sort((x,y)=>y.s-x.s||x.a-y.a).slice(0,5);lbSet(a);lbRender();$('sv').disabled=true;$('sv').textContent='Saved ✓'};
+$('again').onclick=()=>{t=.03;v=0;qi=0;off=0;done=[0,0,0,0,0];first=0;att=0;bonus=0;star=null;$('end').style.display='none';$('sv').disabled=false;$('sv').textContent='Save';$('nm').value='';show('q',0);if(!pin)show('read',0);hud();st='drive';ctl()};
+lbRender();hud();requestAnimationFrame(loop);setTimeout(()=>{if(!window.fbLoad&&!window.fbErr)fbc('🔴 Firebase not loaded (offline, blocked, or this is not the Firebase file)')},6000);
+})();
+</script><script>
+/* Firestore over its REST API: no Firebase SDK files to download, so nothing can be blocked as a script. */
+(()=>{
+const PROJECT="liyliygames-8e84a",KEY="AIzaSyCtxsrkOYr6zGx9pniNo6-OlPpNzCvnghk",DB="(default)",COLLECTION="scoregamedrive";
+const base="https://firestore.googleapis.com/v1/projects/"+PROJECT+"/databases/"+DB+"/documents";
+async function call(url,body){
+ const r=await fetch(url+"?key="+KEY,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+ const j=await r.json().catch(()=>null);
+ if(!r.ok){const e=(j&&(Array.isArray(j)?j[0]:j).error)||{};throw{code:e.status||("HTTP "+r.status),message:e.message||"request failed"}}
+ return j}
+const I=n=>({integerValue:String(n)});
+window.fbSave=x=>call(base+"/"+COLLECTION,{fields:{name:{stringValue:String(x.n).slice(0,14)},score:I(x.s),attempts:I(x.a),matches:I(x.m||0),ts:{timestampValue:new Date().toISOString()}}});
+window.fbLoad=async()=>{
+ const j=await call(base+":runQuery",{structuredQuery:{from:[{collectionId:COLLECTION}],orderBy:[{field:{fieldPath:"score"},direction:"DESCENDING"}],limit:50}});
+ return j.filter(d=>d.document).map(d=>d.document.fields||{}).map(f=>({n:String((f.name&&f.name.stringValue)||"Player").slice(0,14),s:+((f.score&&f.score.integerValue)||0),a:+((f.attempts&&f.attempts.integerValue)||0)})).sort((x,y)=>y.s-x.s||x.a-y.a).slice(0,5)};
+window.dispatchEvent(new Event("fbready"));
+})();
+</script>
+</body></html>
